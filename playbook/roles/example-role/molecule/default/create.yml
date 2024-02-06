@@ -16,6 +16,16 @@
         ssh_key_file: "{{ keypair_path }}"
       register: keypair
 
+    - name: install_master | molecule | create.yml | Create NIC
+      azure_rm_networkinterface:
+        resource_group: "rg-fabrykpoc1-core-kcl-eastus-002"
+        name: nic-molecule
+        virtual_network: "vnet-rg-fabrykpoc1-core-kcl-eastus-002"
+        subnet_name: "application"
+        ip_configurations:
+          - name: ipconfig-mol
+            primary: true
+
     - name: Create molecule instance(s)
       azure_rm_virtualmachine:
         resource_group: "{{ item.resource_group_name }}"
@@ -23,12 +33,12 @@
         vm_size: "{{ item.vm_size }}"
         managed_disk_type: "Standard_LRS"
         admin_username: "{{ ssh_user }}"
-        public_ip_allocation_method: Dynamic
         ssh_password_enabled: false
         ssh_public_keys:
           - path: "/home/{{ ssh_user }}/.ssh/authorized_keys"
             key_data: "{{ keypair.ssh_public_key }}"
         image: "{{ item.image }}"
+        network_interfaces: nic-molecule
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200
@@ -43,13 +53,21 @@
       with_items: "{{ server.results }}"
 
 
-    # Mandatory configuration for Molecule to function.
+    - name: Affiche content of server variable
+      debug:
+        var: server
+  
+    - name: Display azure jobs result
+      debug:
+        var: azure_jobs
+
+        # Mandatory configuration for Molecule to function.
 
     - name: Populate instance config dict
       set_fact:
         instance_conf_dict: {
           'instance': "{{ item.ansible_facts.azure_vm.name }}",
-          'address': "{{ item.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}",
+          'address': "{{ item.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.privateIPAddress }}",
           'user': "{{ ssh_user }}",
           'port': "{{ ssh_port }}",
           'identity_file': "{{ keypair_path }}", }
@@ -68,10 +86,10 @@
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
 
-    - name: Wait for SSH
-      wait_for:
-        port: "{{ ssh_port }}"
-        host: "{{ item.address }}"
-        search_regex: SSH
-        delay: 10
-      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+      #    - name: Wait for SSH
+      #wait_for:
+      #  port: "{{ ssh_port }}"
+      #  host: "{{ item.address }}"
+      #  search_regex: SSH
+      #  delay: 10
+      #with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"

@@ -26,6 +26,10 @@ RUN pip install -r /root/setup/requirements.txt
 # ignore the collections.abc deprication warnings and set lang vars to UTF-8
 ENV PYTHONWARNINGS="ignore:Using or importing the ABCs:DeprecationWarning" \
     LC_ALL=C.UTF-8 \
+    ARM_SUBSCRIPTION_ID=19a7ed62-f51f-4e53-b3ea-6ba9a63f17fe \
+    ARM_TENANT_ID=d1c719f7-cc48-4f9f-83ec-f706a2a940fe \
+    ARM_CLIENT_ID=56d94015-47e4-4401-a4a5-5ab03a6a5e7c \
+    ARM_CLIENT_SECRET=KFF8Q~XrhOPsbxmu9x7vICqDHWJgZTaBSL4XMdcL \
     LANG=C.UTF-8
 
 LABEL molecule-azure.ansible.version=2.7.6 \
