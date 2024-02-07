@@ -1,0 +1,16 @@
+---
+-
+  gather_facts: true
+  hosts: all
+  name: Prepare
+  tasks:
+    -
+      debug:
+        msg: "{{ ansible_facts['distribution'] }}"
+      name: "print OS version"
+
+        #    - name: Create local user
+        # win_user:
+        # name: "test"
+        # password: "Adminadmin12345!"
+        # password_never_expires: true

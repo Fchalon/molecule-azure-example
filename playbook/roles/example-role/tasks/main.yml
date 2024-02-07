@@ -1,6 +1,9 @@
 ---
 # tasks file for example-role
-- name: install nginx as a service
-  package:
-    name: "nginx"
-    state: present
+- name: Display Hostname
+  win_shell: "hostname"
+  register: output
+
+- name: Debug
+  debug:
+    var: output

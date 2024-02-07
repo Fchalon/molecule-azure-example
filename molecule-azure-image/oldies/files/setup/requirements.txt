@@ -93,6 +93,7 @@ python-dateutil==2.7.5
 python-gilt==1.2.1
 pyxdg==0.25
 PyYAML>=4.2b1
+pywinrm
 requests==2.21.0
 requests-oauthlib==1.2.0
 SecretStorage==2.3.1

@@ -1,32 +1,50 @@
 ---
 dependency:
   name: galaxy
+  options:
+    ignore-certs: True
+    ignore-errors: True
+    requirements-file: collections.yml
 driver:
   name: azure
-lint:
-  name: yamllint
+role_name_check: 1
 platforms:
-  - name: ubuntu-from-molecule
+  - name: win-mol
     # resource_group_name: infracode_sandbox
     resource_group_name: ${AZURE_RESOURCE_GROUP:-molecule}
-    vm_size: Standard_B1s
+    vm_size: Standard_B4ms
     image:
-      offer: UbuntuServer
-      publisher: Canonical
-      sku: 18.04-LTS
+      offer: WindowsServer
+      publisher: MicrosoftWindowsServer
+      sku: 2016-Datacenter
       version: latest
 provisioner:
   name: ansible
+  connection_options:
+    become: true
+    become_method: runas
+    ansible_password: "Adminadmin12345!"
+    ansible_connection: winrm
+    ansible_port: 5985
+    ansible_winrm_transport: ntlm
+    # ansible_winrm_scheme: https
+    ansible_winrm_server_cert_validation: ignore
+    ansible_shell_type: powershell
   lint:
-    name: ansible-lint
-  log: True
-  options:
-    become: True
-scenario:
-  name: default
-verifier:
-  name: testinfra
-  options:
-    sudo: True
-  lint:
-    name: flake8
+   name: ansible-lint
+  log: true
+  scenario:
+    name: default
+  # scenario:
+  # test_sequence:
+  #  - dependency
+  #  - destroy
+  #  - syntax
+  #  - create
+  #  - prepare
+  #  - converge
+##    - idempotence
+## - side_effect
+#     #    - verify
+#      #    - cleanup
+#   - destroy

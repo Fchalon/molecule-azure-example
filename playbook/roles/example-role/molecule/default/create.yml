@@ -19,7 +19,7 @@
     - name: install_master | molecule | create.yml | Create NIC
       azure_rm_networkinterface:
         resource_group: "rg-fabrykpoc1-core-kcl-eastus-002"
-        name: nic-molecule
+        name: nic-mol1
         virtual_network: "vnet-rg-fabrykpoc1-core-kcl-eastus-002"
         subnet_name: "application"
         ip_configurations:
@@ -32,13 +32,11 @@
         name: "{{ item.name }}"
         vm_size: "{{ item.vm_size }}"
         managed_disk_type: "Standard_LRS"
+        os_type: Windows
         admin_username: "{{ ssh_user }}"
-        ssh_password_enabled: false
-        ssh_public_keys:
-          - path: "/home/{{ ssh_user }}/.ssh/authorized_keys"
-            key_data: "{{ keypair.ssh_public_key }}"
+        admin_password: "Adminadmin12345!"
         image: "{{ item.image }}"
-        network_interfaces: nic-molecule
+        network_interfaces: nic-mol1
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200
@@ -53,21 +51,25 @@
       with_items: "{{ server.results }}"
 
 
-    - name: Affiche content of server variable
-      debug:
-        var: server
-  
-    - name: Display azure jobs result
-      debug:
-        var: azure_jobs
+      #    - name: Affiche content of server variable
+      # debug:
+      #  var: server
+
+      # - name: Display azure jobs result
+      # debug:
+      #  var: azure_jobs
 
         # Mandatory configuration for Molecule to function.
+    - name: Display azure_jobs
+      ansible.builtin.debug:
+        var: azure_jobs
 
     - name: Populate instance config dict
       set_fact:
         instance_conf_dict: {
           'instance': "{{ item.ansible_facts.azure_vm.name }}",
-          'address': "{{ item.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.privateIPAddress }}",
+            #'address': "{{ item.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.privateIPAddress }}",
+          'address': "{{ item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address }}",
           'user': "{{ ssh_user }}",
           'port': "{{ ssh_port }}",
           'identity_file': "{{ keypair_path }}", }
@@ -82,14 +84,25 @@
 
     - name: Dump instance config
       copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        content: "{{ instance_conf | to_json | from_json | to_yaml }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
 
-      #    - name: Wait for SSH
-      #wait_for:
+        # - name: Convert instance config dict to a list
+        # set_fact:
+        # instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
+        # when: server.changed | bool
+
+        # - name: Dump instance config
+        # copy:
+        # content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        # dest: "{{ molecule_instance_config }}"
+        # when: server.changed | bool
+
+      # - name: Wait for SSH
+      # wait_for:
       #  port: "{{ ssh_port }}"
       #  host: "{{ item.address }}"
       #  search_regex: SSH
       #  delay: 10
-      #with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+      # with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
